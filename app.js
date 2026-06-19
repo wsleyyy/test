@@ -4,10 +4,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const lacePathInner = document.getElementById("lace-path-inner");
   const interactiveSide = document.querySelector(".interactive-side");
 
-  // Normalized coordinate space variables mapping directly inside SVG view box
+  // Canvas coordinate space configuration
   const svgW = 500;
-  const anchorX = 250; // Dead center of the SVG panel canvas view
-  const anchorY = 0;
+  const anchorX = 250; // Dead center of the loop top hanging point
+  const anchorY = -10; // Slightly hidden above the viewport boundary
   const restHeight = 335;
 
   let x = anchorX;
@@ -30,7 +30,6 @@ document.addEventListener("DOMContentLoaded", () => {
   function startDrag(clientX, clientY) {
     isDragging = true;
     const rect = badge.getBoundingClientRect();
-    // Absolute position within parent element calculation 
     grabOffsetX = clientX - rect.left - (rect.width / 2);
     grabOffsetY = clientY - rect.top;
   }
@@ -39,14 +38,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!isDragging) return;
     const sideRect = interactiveSide.getBoundingClientRect();
     
-    // Scale tracking pointer inputs explicitly into the local 500px coordinate system
     const rawTargetX = ((clientX - sideRect.left) / sideRect.width) * svgW;
     const rawTargetY = clientY - sideRect.top;
 
     targetX = rawTargetX - grabOffsetX;
     targetY = rawTargetY;
 
-    // Boundary constraints check
     const dx = targetX - anchorX;
     const dy = targetY - anchorY;
     const dist = Math.sqrt(dx * dx + dy * dy);
@@ -60,7 +57,6 @@ document.addEventListener("DOMContentLoaded", () => {
     isDragging = false;
   }
 
-  // Event Listeners setup
   badge.addEventListener("mousedown", (e) => {
     e.preventDefault();
     startDrag(e.clientX, e.clientY);
@@ -84,7 +80,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.addEventListener("touchend", endDrag);
 
-  // Runtime Animation Loop Engine
   function updatePhysics() {
     swingTimer += 0.025;
 
@@ -107,7 +102,6 @@ document.addEventListener("DOMContentLoaded", () => {
       y += vy;
     }
 
-    // Convert local SVG coordinates into CSS transform px translate matrices 
     if (interactiveSide) {
       const sideRect = interactiveSide.getBoundingClientRect();
       const currentPixelX = (x / svgW) * sideRect.width;
@@ -119,35 +113,44 @@ document.addEventListener("DOMContentLoaded", () => {
       const rotation = isDragging ? (targetX - x) * 0.08 : vx * 1.5;
       badge.style.transform = `translate3d(${translateX}px, ${translateY}px, 0) rotate(${rotation}deg)`;
 
-      // Dynamic path math updates
+      // --- THE LACE VISUAL CORRECTION ---
+      // Lowered the connection target coordinate down into the metal clip area
       const badgeTopX = x;
-      const badgeTopY = y + 12;
+      const badgeTopY = y + 16; 
 
-      const leftControlX = anchorX - 50 + (vx * 0.4);
-      const leftControlY = badgeTopY * 0.4;
-      const rightControlX = anchorX + 50 + (vx * 0.4);
-      const rightControlY = badgeTopY * 0.4;
+      // Widened the neck-loop span at the top ceiling for a realistic drape profile
+      const leftAnchorX = anchorX - 55;
+      const rightAnchorX = anchorX + 55;
 
+      // Dynamic path Bezier control handles that react to velocity inertia
+      const leftControlX = leftAnchorX + (vx * 0.3);
+      const leftControlY = badgeTopY * 0.45;
+      const rightControlX = rightAnchorX + (vx * 0.3);
+      const rightControlY = badgeTopY * 0.45;
+
+      // Merges both left and right bands seamlessly into a sharp point at the clip
       const pathData = `
-        M ${anchorX - 20},${anchorY} 
-        C ${leftControlX},${leftControlY} ${badgeTopX - 15},${badgeTopY - 25} ${badgeTopX},${badgeTopY}
-        M ${anchorX + 20},${anchorY} 
-        C ${rightControlX},${rightControlY} ${badgeTopX + 15},${badgeTopY - 25} ${badgeTopX},${badgeTopY}
+        M ${leftAnchorX},${anchorY} 
+        C ${leftControlX},${leftControlY} ${badgeTopX - 8},${badgeTopY - 20} ${badgeTopX},${badgeTopY}
+        M ${rightAnchorX},${anchorY} 
+        C ${rightControlX},${rightControlY} ${badgeTopX + 8},${badgeTopY - 20} ${badgeTopX},${badgeTopY}
       `;
 
       lacePath.setAttribute("d", pathData);
       lacePathInner.setAttribute("d", pathData);
+
+      // Boost line-weights directly to make the fabric look prominent and distinct
+      lacePath.setAttribute("stroke-width", "14");      /* Dark outer edge border */
+      lacePathInner.setAttribute("stroke-width", "6");  /* Bright inner neon tracer line */
     }
 
     requestAnimationFrame(updatePhysics);
   }
 
-  // Safe run delay initialization
   setTimeout(() => {
     updatePhysics();
   }, 50);
 
-  // Scroll Routine
   const exploreBtn = document.getElementById('explore-btn');
   const projectsSection = document.getElementById('projects');
   if (exploreBtn && projectsSection) {
@@ -156,7 +159,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Work card intersection observer engines
   const cards = document.querySelectorAll('.project-card');
   const revealOnScroll = new IntersectionObserver((entries, observer) => {
     entries.forEach(entry => {
