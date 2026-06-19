@@ -2,12 +2,24 @@ document.addEventListener("DOMContentLoaded", () => {
   const badge = document.getElementById("id-badge");
   const lacePath = document.getElementById("lace-path");
   const lacePathInner = document.getElementById("lace-path-inner");
+  const interactiveSide = document.querySelector(".interactive-side");
 
-  // Hook point where lace connects to ceiling anchor
-  const anchorX = window.innerWidth / 4 * 3; // Right side center
-  const anchorY = 0;
+  // Dynamic Anchor calculation based on container coordinates
+  let anchorX = window.innerWidth * 0.75;
+  let anchorY = 0;
 
-  // Badge state variables
+  function updateAnchor() {
+    if (interactiveSide) {
+      const rect = interactiveSide.getBoundingClientRect();
+      anchorX = rect.left + (rect.width / 2);
+    } else {
+      anchorX = window.innerWidth * 0.75;
+    }
+  }
+  updateAnchor();
+  window.addEventListener("resize", updateAnchor);
+
+  // Core coordinates
   let x = anchorX;
   let y = 220; 
   let vx = 0;
@@ -17,79 +29,80 @@ document.addEventListener("DOMContentLoaded", () => {
   let targetY = y;
   
   let isDragging = false;
-  let pointerX = 0;
-  let pointerY = 0;
   let grabOffsetX = 0;
   let grabOffsetY = 0;
 
-  // Spring & Swing settings
+  // Spring Physics Variables
   const springK = 0.08; 
-  const damping = 0.92; 
-  const gravity = 0.4;
+  const damping = 0.88; 
+  const gravity = 0.5;
   let swingTimer = 0;
 
-  // 1. DRAG EVENT LISTENERS
-  badge.addEventListener("mousedown", (e) => {
+  // Drag handlers
+  function startDrag(clientX, clientY) {
     isDragging = true;
-    grabOffsetX = e.clientX - x;
-    grabOffsetY = e.clientY - y;
-  });
+    grabOffsetX = clientX - x;
+    grabOffsetY = clientY - y;
+  }
 
-  window.addEventListener("mousemove", (e) => {
+  function moveDrag(clientX, clientY) {
     if (!isDragging) return;
-    pointerX = e.clientX;
-    pointerY = e.clientY;
-    
-    targetX = pointerX - grabOffsetX;
-    targetY = pointerY - grabOffsetY;
+    targetX = clientX - grabOffsetX;
+    targetY = clientY - grabOffsetY;
 
-    // Limit maximum stretch range to avoid broken physics layouts
+    // Safety constraint limits
     const dx = targetX - anchorX;
     const dy = targetY - anchorY;
     const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist > 500) {
-      targetX = anchorX + (dx / dist) * 500;
-      targetY = anchorY + (dy / dist) * 500;
+    if (dist > 450) {
+      targetX = anchorX + (dx / dist) * 450;
+      targetY = anchorY + (dy / dist) * 450;
     }
-  });
+  }
 
-  window.addEventListener("mouseup", () => {
+  function endDrag() {
     isDragging = false;
+  }
+
+  // Mouse Inputs
+  badge.addEventListener("mousedown", (e) => {
+    e.preventDefault(); 
+    startDrag(e.clientX, e.clientY);
   });
 
-  // Support Mobile/Touch Devices
-  badge.addEventListener("touchstart", (e) => {
-    isDragging = true;
-    const touch = e.touches[0];
-    grabOffsetX = touch.clientX - x;
-    grabOffsetY = touch.clientY - y;
+  window.addEventListener("mousemove", (e) => {
+    moveDrag(e.clientX, e.clientY);
   });
+
+  window.addEventListener("mouseup", endDrag);
+
+  // Mobile/Touch Inputs
+  badge.addEventListener("touchstart", (e) => {
+    const touch = e.touches[0];
+    startDrag(touch.clientX, touch.clientY);
+  }, { passive: true });
 
   window.addEventListener("touchmove", (e) => {
-    if (!isDragging) return;
     const touch = e.touches[0];
-    targetX = touch.clientX - grabOffsetX;
-    targetY = touch.clientY - grabOffsetY;
-  });
+    moveDrag(touch.clientX, touch.clientY);
+  }, { passive: true });
 
-  window.addEventListener("touchend", () => { isDragging = false; });
+  window.addEventListener("touchend", endDrag);
 
-  // 2. PHYSICS ANIMATION LOOP
+  // Continuous Integration Loop
   function updatePhysics() {
-    swingTimer += 0.03;
+    swingTimer += 0.025;
 
     if (isDragging) {
-      // Track pointer directly
-      x += (targetX - x) * 0.3;
-      y += (targetY - y) * 0.3;
+      x += (targetX - x) * 0.25;
+      y += (targetY - y) * 0.25;
       vx = 0;
       vy = 0;
     } else {
-      // Resting position adds a small ambient loop swing animation
-      const restX = anchorX + Math.sin(swingTimer) * 20; 
-      const restY = 220 + Math.cos(swingTimer * 2) * 4;
+      // Small automated natural swinging parameters
+      const restX = anchorX + Math.sin(swingTimer) * 15; 
+      const restY = 220 + Math.cos(swingTimer * 2) * 3;
 
-      // Spring acceleration formulas
       let ax = (restX - x) * springK;
       let ay = (restY - y) * springK + gravity;
 
@@ -100,21 +113,15 @@ document.addEventListener("DOMContentLoaded", () => {
       y += vy;
     }
 
-    // Apply 2D hardware-accelerated transforms onto the ID Badge
-    // Subtle rotation added based on horizontal velocity vector
-    const rotation = isDragging ? (targetX - x) * 0.1 : vx * 1.2;
-    badge.style.transform = `translate3d(${x - (window.innerWidth / 4 * 3)}px, ${y - 220}px, 0) rotate(${rotation}deg)`;
+    // Apply 3D matrix offset to layout container
+    const rotation = isDragging ? (targetX - x) * 0.08 : vx * 1.2;
+    badge.style.transform = `translate3d(${x - anchorX}px, ${y - 220}px, 0) rotate(${rotation}deg)`;
 
-    // 3. DRAW STRINGS (LANYARD LACE)
-    // Creates a realistic curved rope profile using bezier anchor coordinates
-    const badgeTopX = x;
-    const badgeTopY = y;
-    
-    // Control point splits the lace path into natural dangling loops
-    const controlX = (anchorX + badgeTopX) / 2 + (vx * 2);
-    const controlY = (anchorY + badgeTopY) / 2 + 60;
+    // Redraw vector cord paths
+    const controlX = (anchorX + x) / 2;
+    const controlY = (anchorY + y) / 2 + 50;
 
-    const pathData = `M ${anchorX - 30},${anchorY} Q ${controlX},${controlY} ${badgeTopX},${badgeTopY} M ${anchorX + 30},${anchorY} Q ${controlX},${controlY} ${badgeTopX},${badgeTopY}`;
+    const pathData = `M ${anchorX - 25},${anchorY} Q ${controlX},${controlY} ${x},${y} M ${anchorX + 25},${anchorY} Q ${controlX},${controlY} ${x},${y}`;
     
     lacePath.setAttribute("d", pathData);
     lacePathInner.setAttribute("d", pathData);
@@ -122,6 +129,19 @@ document.addEventListener("DOMContentLoaded", () => {
     requestAnimationFrame(updatePhysics);
   }
 
-  // Initialize loop
-  updatePhysics();
+  // Handle anchor visibility check before launching loop run
+  setTimeout(() => {
+    updateAnchor();
+    x = anchorX;
+    updatePhysics();
+  }, 100);
+
+  // 3. EXPLORE BUTTON ACTION SMOOTH SCROLL ROUTINE
+  const exploreBtn = document.getElementById('explore-btn');
+  const projectsSection = document.getElementById('projects');
+  if (exploreBtn && projectsSection) {
+    exploreBtn.addEventListener('click', () => {
+      projectsSection.scrollIntoView({ behavior: 'smooth' });
+    });
+  }
 });
