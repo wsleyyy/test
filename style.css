@@ -26,7 +26,7 @@ body {
   background-color: var(--bg-dark);
   color: var(--text-primary);
   font-family: var(--font-sans);
-  overflow-x: hidden; /* Allows scrolling down to showcase sections */
+  overflow-x: hidden;
   min-height: 100vh;
 }
 
@@ -42,7 +42,6 @@ body {
   padding: 0 4rem;
 }
 
-/* Left Side Text */
 .intro-side {
   flex: 1;
   display: flex;
@@ -77,7 +76,6 @@ body {
   margin-bottom: 3rem;
 }
 
-/* Interactive Magnet Button */
 .btn-showcase {
   background: transparent;
   color: var(--text-primary);
@@ -97,16 +95,16 @@ body {
   transform: translateY(-2px) scale(1.02);
 }
 
-/* Right Side Interaction Container */
 .interactive-side {
   flex: 1;
   position: relative;
   display: flex;
   justify-content: center;
+  height: 100vh;
 }
 
 /* ==========================================================================
-   4. PHYSICS SIMULATION CANVAS (LANYARD & BADGE)
+   4. PHYSICS CANVAS (LANYARD & BADGE)
    ========================================================================== */
 .lanyard-wrapper {
   position: absolute;
@@ -120,18 +118,17 @@ body {
   top: 0;
   left: 0;
   width: 100%;
-  height: 100%;
+  height: 100vh;
   pointer-events: none;
   z-index: 2;
 }
 
-/* Draggable ID Card */
 .id-badge {
   position: absolute;
   width: 260px;
   height: 400px;
   left: calc(50% - 130px);
-  top: 220px;
+  top: 350px; /* Dropped resting point for a longer lace visual */
   cursor: grab;
   z-index: 5;
   user-select: none;
@@ -195,6 +192,10 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* Mouse-Grab Passthrough Fix */
+.profile-img, .photo-container, .badge-details, .badge-inner {
   pointer-events: none;
 }
 
@@ -248,7 +249,6 @@ body {
   padding: 6rem 2rem;
 }
 
-/* Glassmorphism Showcase Cards */
 .project-card {
   background: var(--bg-surface);
   backdrop-filter: blur(12px);
@@ -258,8 +258,6 @@ body {
   padding: 2.5rem;
   position: relative;
   transition: var(--transition-smooth);
-  
-  /* Initial hidden states for JavaScript Scroll Engine */
   opacity: 0;
   transform: translateY(40px);
 }
@@ -308,10 +306,7 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.03);
 }
 
-/* JS Trigger Reveal Class */
 .project-card.reveal {
   opacity: 1;
   transform: translateY(0);
-   .profile-img, .photo-container, .badge-details, .badge-inner {
-  pointer-events: none; /* Passes click tracking straight to the main id-badge handler */
 }
