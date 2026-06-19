@@ -312,4 +312,6 @@ body {
 .project-card.reveal {
   opacity: 1;
   transform: translateY(0);
+   .profile-img, .photo-container, .badge-details, .badge-inner {
+  pointer-events: none; /* Passes click tracking straight to the main id-badge handler */
 }
