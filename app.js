@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const lacePathInner = document.getElementById("lace-path-inner");
   const interactiveSide = document.querySelector(".interactive-side");
 
-  // Ceiling anchor point where the lace hangs from
+  // Dynamic Anchor points mapping cleanly to relative window boundaries
   let anchorX = window.innerWidth * 0.75;
   let anchorY = 0;
 
@@ -19,8 +19,8 @@ document.addEventListener("DOMContentLoaded", () => {
   updateAnchor();
   window.addEventListener("resize", updateAnchor);
 
-  // Initial resting parameters
-  const restHeight = 350; 
+  // Resting coordinates setup
+  const restHeight = 320; 
   let x = anchorX;
   let y = restHeight; 
   let vx = 0;
@@ -33,9 +33,9 @@ document.addEventListener("DOMContentLoaded", () => {
   let grabOffsetX = 0;
   let grabOffsetY = 0;
 
-  // Optimized Tension Physics
-  const springK = 0.06;  
-  const damping = 0.90;  
+  // Spring & Drag physics variables
+  const springK = 0.05;  
+  const damping = 0.88;  
   const gravity = 0.6;   
   let swingTimer = 0;
 
@@ -50,13 +50,13 @@ document.addEventListener("DOMContentLoaded", () => {
     targetX = clientX - grabOffsetX;
     targetY = clientY - grabOffsetY;
 
-    // Safety extension constraints limit
+    // Safety tension constraints limit
     const dx = targetX - anchorX;
     const dy = targetY - anchorY;
     const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist > 600) { 
-      targetX = anchorX + (dx / dist) * 600;
-      targetY = anchorY + (dy / dist) * 600;
+    if (dist > 550) { 
+      targetX = anchorX + (dx / dist) * 550;
+      targetY = anchorY + (dy / dist) * 550;
     }
   }
 
@@ -89,7 +89,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.addEventListener("touchend", endDrag);
 
-  // Physics Loop Execution Engine
+  // Real-time Animation Loop
   function updatePhysics() {
     swingTimer += 0.02;
 
@@ -99,9 +99,9 @@ document.addEventListener("DOMContentLoaded", () => {
       vx = 0;
       vy = 0;
     } else {
-      // Small ambient swinging loop parameters
-      const restX = anchorX + Math.sin(swingTimer) * 25; 
-      const restY = restHeight + Math.cos(swingTimer * 2) * 5;
+      // Small ambient automated swinging loop calculations
+      const restX = anchorX + Math.sin(swingTimer) * 20; 
+      const restY = restHeight + Math.cos(swingTimer * 2) * 4;
 
       let ax = (restX - x) * springK;
       let ay = (restY - y) * springK + gravity;
@@ -113,33 +113,41 @@ document.addEventListener("DOMContentLoaded", () => {
       y += vy;
     }
 
-    // Apply 3D translate offsets to badge
-    const rotation = isDragging ? (targetX - x) * 0.06 : vx * 1.0;
+    // Translate coordinates onto the physical Badge item 
+    const rotation = isDragging ? (targetX - x) * 0.06 : vx * 1.2;
     badge.style.transform = `translate3d(${x - anchorX}px, ${y - restHeight}px, 0) rotate(${rotation}deg)`;
 
-    // Draw the full length parabolic neck lace path
-    const badgeTopX = x;
-    const badgeTopY = y + 15; 
+    // RELATIVE COORDINATE RESOLUTION FOR SVG SPACE
+    if (interactiveSide) {
+      const sideRect = interactiveSide.getBoundingClientRect();
+      
+      // Calculate where the clip sits relative to the SVG viewable box
+      const svgClipX = x - sideRect.left;
+      const svgClipY = y; 
+      const svgAnchorX = sideRect.width / 2;
 
-    const leftControlX = anchorX - 80 + (vx * 0.5);
-    const leftControlY = (anchorY + badgeTopY) * 0.4;
-    
-    const rightControlX = anchorX + 80 + (vx * 0.5);
-    const rightControlY = (anchorY + badgeTopY) * 0.4;
+      // Draw a natural curving loop profile via Cubic Bezier control handles
+      const leftControlX = svgAnchorX - 60 + (vx * 0.5);
+      const leftControlY = svgClipY * 0.35;
+      
+      const rightControlX = svgAnchorX + 60 + (vx * 0.5);
+      const rightControlY = svgClipY * 0.35;
 
-    const pathData = `
-      M ${anchorX - 40},${anchorY} 
-      C ${leftControlX},${leftControlY} ${badgeTopX - 20},${badgeTopY - 40} ${badgeTopX},${badgeTopY}
-      M ${anchorX + 40},${anchorY} 
-      C ${rightControlX},${rightControlY} ${badgeTopX + 20},${badgeTopY - 40} ${badgeTopX},${badgeTopY}
-    `;
-    
-    lacePath.setAttribute("d", pathData);
-    lacePathInner.setAttribute("d", pathData);
+      const pathData = `
+        M ${svgAnchorX - 25},${anchorY} 
+        C ${leftControlX},${leftControlY} ${svgClipX - 15},${svgClipY - 30} ${svgClipX},${svgClipY}
+        M ${svgAnchorX + 25},${anchorY} 
+        C ${rightControlX},${rightControlY} ${svgClipX + 15},${svgClipY - 30} ${svgClipX},${svgClipY}
+      `;
+      
+      lacePath.setAttribute("d", pathData);
+      lacePathInner.setAttribute("d", pathData);
+    }
 
     requestAnimationFrame(updatePhysics);
   }
 
+  // Confirm parameters are initialized clean
   setTimeout(() => {
     updateAnchor();
     x = anchorX;
@@ -147,7 +155,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updatePhysics();
   }, 100);
 
-  // Scroll Routine
+  // Smooth Scroll
   const exploreBtn = document.getElementById('explore-btn');
   const projectsSection = document.getElementById('projects');
   if (exploreBtn && projectsSection) {
@@ -156,7 +164,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // INTERACTIVE SCROLL REVEAL FOR WORK CARDS
+  // Reveal Cards engine
   const cards = document.querySelectorAll('.project-card');
   const revealOnScroll = new IntersectionObserver((entries, observer) => {
     entries.forEach(entry => {
