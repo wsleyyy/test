@@ -1,12 +1,21 @@
+/* ==========================================================================
+   1. DESIGN SYSTEM & VARIABLES
+   ========================================================================== */
 :root {
   --bg-dark: #0a0a0f;
+  --bg-surface: rgba(255, 255, 255, 0.03);
   --text-primary: #ffffff;
-  --text-muted: #94a3b8;
-  --accent-blue: #38bdf8;
+  --text-secondary: #94a3b8;
+  --accent-glow: #38bdf8; /* Sleek Tech Blue */
+  --border-color: rgba(255, 255, 255, 0.08);
+  --transition-smooth: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   --font-sans: 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
 
+/* ==========================================================================
+   2. GLOBAL RESETS & BASE STYLES
+   ========================================================================== */
 * {
   margin: 0;
   padding: 0;
@@ -17,10 +26,13 @@ body {
   background-color: var(--bg-dark);
   color: var(--text-primary);
   font-family: var(--font-sans);
-  overflow: hidden;
-  height: 100vh;
+  overflow-x: hidden; /* Allows scrolling down to showcase sections */
+  min-height: 100vh;
 }
 
+/* ==========================================================================
+   3. LANDING HERO SECTION (SPLIT LAYOUT)
+   ========================================================================== */
 .landing-container {
   display: flex;
   width: 100%;
@@ -30,7 +42,7 @@ body {
   padding: 0 4rem;
 }
 
-/* LEFT SIDE INTERFACES */
+/* Left Side Text */
 .intro-side {
   flex: 1;
   display: flex;
@@ -58,33 +70,34 @@ body {
 }
 
 .title-sub {
-  font-family: var(--font-sans);
   font-size: 1.75rem;
   font-weight: 600;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   letter-spacing: 0.05em;
   margin-bottom: 3rem;
 }
 
+/* Interactive Magnet Button */
 .btn-showcase {
   background: transparent;
   color: var(--text-primary);
   border: 1px solid rgba(255, 255, 255, 0.15);
   padding: 1rem 2.5rem;
   font-size: 1rem;
+  font-weight: 600;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: var(--transition-smooth);
   box-shadow: 0 4px 20px rgba(56, 189, 248, 0.05);
 }
 
 .btn-showcase:hover {
-  border-color: var(--accent-blue);
+  border-color: var(--accent-glow);
   box-shadow: 0 0 30px rgba(56, 189, 248, 0.25);
-  transform: translateY(-2px);
+  transform: translateY(-2px) scale(1.02);
 }
 
-/* RIGHT SIDE: PHYSICS SIMULATION CANVAS */
+/* Right Side Interaction Container */
 .interactive-side {
   flex: 1;
   position: relative;
@@ -92,6 +105,9 @@ body {
   justify-content: center;
 }
 
+/* ==========================================================================
+   4. PHYSICS SIMULATION CANVAS (LANYARD & BADGE)
+   ========================================================================== */
 .lanyard-wrapper {
   position: absolute;
   top: 0;
@@ -109,13 +125,13 @@ body {
   z-index: 2;
 }
 
-/* DRAGGABLE ID BADGE COMPONENT */
+/* Draggable ID Card */
 .id-badge {
   position: absolute;
   width: 260px;
   height: 400px;
   left: calc(50% - 130px);
-  top: 220px; /* Anchor rest point */
+  top: 220px;
   cursor: grab;
   z-index: 5;
   user-select: none;
@@ -144,7 +160,7 @@ body {
   width: 100%;
   height: calc(100% - 35px);
   border-radius: 16px;
-  box-shadow: 0 25px 60px rgba(0,0,0,0.6), 0 0 1px rgba(255,255,255,0.2);
+  box-shadow: 0 25px 60px rgba(0,0,0,0.6);
   padding: 1.25rem;
   display: flex;
   flex-direction: column;
@@ -219,3 +235,81 @@ body {
 }
 .barcode span:nth-child(2n) { width: 4px; }
 .barcode span:nth-child(3n) { width: 1px; }
+
+/* ==========================================================================
+   5. SHOWCASE SECTION (PORTFOLIO GRID)
+   ========================================================================== */
+.portfolio-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2.5rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 6rem 2rem;
+}
+
+/* Glassmorphism Showcase Cards */
+.project-card {
+  background: var(--bg-surface);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 2.5rem;
+  position: relative;
+  transition: var(--transition-smooth);
+  
+  /* Initial hidden states for JavaScript Scroll Engine */
+  opacity: 0;
+  transform: translateY(40px);
+}
+
+.project-card:hover {
+  transform: translateY(-8px) scale(1.01);
+  border-color: rgba(56, 189, 248, 0.4);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(56, 189, 248, 0.15);
+}
+
+.card-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent-glow);
+  margin-bottom: 1.25rem;
+  font-weight: 600;
+}
+
+.project-card h3 {
+  font-size: 1.5rem;
+  margin-bottom: 0.85rem;
+  letter-spacing: -0.02em;
+}
+
+.project-card p {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.tech-stack {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.tech-tag {
+  font-size: 0.8rem;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.3rem 0.8rem;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+/* JS Trigger Reveal Class */
+.project-card.reveal {
+  opacity: 1;
+  transform: translateY(0);
+}
