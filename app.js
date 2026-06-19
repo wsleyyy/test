@@ -4,10 +4,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const lacePathInner = document.getElementById("lace-path-inner");
   const interactiveSide = document.querySelector(".interactive-side");
 
-  // Canvas coordinate space configuration
+  // Normalized coordinate canvas mapping configurations
   const svgW = 500;
-  const anchorX = 250; // Dead center of the loop top hanging point
-  const anchorY = -10; // Slightly hidden above the viewport boundary
+  const anchorX = 250; // Dead center of the layout top ceiling 
+  const anchorY = -5;  // Tucked neatly beyond the top edge framework
   const restHeight = 335;
 
   let x = anchorX;
@@ -30,6 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function startDrag(clientX, clientY) {
     isDragging = true;
     const rect = badge.getBoundingClientRect();
+    // Anchor offset targeting calculations
     grabOffsetX = clientX - rect.left - (rect.width / 2);
     grabOffsetY = clientY - rect.top;
   }
@@ -57,6 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
     isDragging = false;
   }
 
+  // Input bindings
   badge.addEventListener("mousedown", (e) => {
     e.preventDefault();
     startDrag(e.clientX, e.clientY);
@@ -113,35 +115,38 @@ document.addEventListener("DOMContentLoaded", () => {
       const rotation = isDragging ? (targetX - x) * 0.08 : vx * 1.5;
       badge.style.transform = `translate3d(${translateX}px, ${translateY}px, 0) rotate(${rotation}deg)`;
 
-      // --- THE LACE VISUAL CORRECTION ---
-      // Lowered the connection target coordinate down into the metal clip area
+      // --- CRITICAL CONNECTION & STYLE CORRECTIONS ---
+      // Lowers coordinate baseline to drop exactly inside the metallic clip matrix bounds
       const badgeTopX = x;
-      const badgeTopY = y + 16; 
+      const badgeTopY = y + 15; 
 
-      // Widened the neck-loop span at the top ceiling for a realistic drape profile
-      const leftAnchorX = anchorX - 55;
-      const rightAnchorX = anchorX + 55;
+      // Spans the neck attachment loops perfectly at the top edge ceiling
+      const leftAnchorX = anchorX - 45;
+      const rightAnchorX = anchorX + 45;
 
-      // Dynamic path Bezier control handles that react to velocity inertia
       const leftControlX = leftAnchorX + (vx * 0.3);
       const leftControlY = badgeTopY * 0.45;
       const rightControlX = rightAnchorX + (vx * 0.3);
       const rightControlY = badgeTopY * 0.45;
 
-      // Merges both left and right bands seamlessly into a sharp point at the clip
+      // Merges paths cleanly to loop smoothly without overlapping lines
       const pathData = `
         M ${leftAnchorX},${anchorY} 
-        C ${leftControlX},${leftControlY} ${badgeTopX - 8},${badgeTopY - 20} ${badgeTopX},${badgeTopY}
+        C ${leftControlX},${leftControlY} ${badgeTopX - 6},${badgeTopY - 15} ${badgeTopX},${badgeTopY}
         M ${rightAnchorX},${anchorY} 
-        C ${rightControlX},${rightControlY} ${badgeTopX + 8},${badgeTopY - 20} ${badgeTopX},${badgeTopY}
+        C ${rightControlX},${rightControlY} ${badgeTopX + 6},${badgeTopY - 15} ${badgeTopX},${badgeTopY}
       `;
 
       lacePath.setAttribute("d", pathData);
       lacePathInner.setAttribute("d", pathData);
 
-      // Boost line-weights directly to make the fabric look prominent and distinct
-      lacePath.setAttribute("stroke-width", "14");      /* Dark outer edge border */
-      lacePathInner.setAttribute("stroke-width", "6");  /* Bright inner neon tracer line */
+      // Force heavy fabric line weight profiles
+      lacePath.setAttribute("stroke-width", "16");
+      lacePathInner.setAttribute("stroke-width", "16"); // Matches outer to hide the inner blue line completely
+
+      // Enforce clean, uniform dark-gray coloring across elements directly to override HTML
+      lacePath.setAttribute("stroke", "#334155");      // Elegant solid slate/gray color
+      lacePathInner.setAttribute("stroke", "#334155"); // Overwrites neon tracer to match uniform fill
     }
 
     requestAnimationFrame(updatePhysics);
