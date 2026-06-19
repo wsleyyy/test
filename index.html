@@ -3,45 +3,50 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Technical Portfolio</title>
-  
+  <title>Wesley C. Sequite | Portfolio</title>
   <link rel="stylesheet" href="style.css">
-  
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-  <header class="hero">
-    <h1 class="hero-title">Technical Portfolio</h1>
-    <p class="hero-subtitle">Engineering high-performance solutions, interactive layouts, and optimized automation systems.</p>
-    <button class="btn-interactive" id="explore-btn">
-      Explore Projects
-    </button>
-  </header>
+  <div class="landing-container">
+    <section class="intro-side">
+      <h1 class="name-title">WESLEY C. SEQUITE</h1>
+      <div class="divider"></div>
+      <h2 class="title-sub">MECHATRONICS TECHNOLOGIST</h2>
+      <button class="btn-showcase" id="explore-btn">View Showcase</button>
+    </section>
 
-  <main class="portfolio-grid" id="projects">
-    
-    <div class="project-card">
-      <div class="card-badge">Production</div>
-      <h3>Automated System Dashboard</h3>
-      <p>An optimized data visualization layout designed for real-time tracking, sensor logic monitoring, and responsive layouts.</p>
-      <div class="tech-stack">
-        <span class="tech-tag">HTML/CSS</span>
-        <span class="tech-tag">Flexbox</span>
+    <section class="interactive-side">
+      <div class="lanyard-wrapper">
+        <svg class="lanyard-lace" id="lace-svg">
+          <path id="lace-path" d="" fill="none" stroke="#1e293b" stroke-width="12" stroke-linecap="round"/>
+          <path id="lace-path-inner" d="" fill="none" stroke="#334155" stroke-width="6" stroke-linecap="round"/>
+        </svg>
+
+        <div class="id-badge" id="id-badge">
+          <div class="badge-clip"></div>
+          <div class="badge-inner">
+            <div class="badge-header">
+              <div class="camera-hole"></div>
+            </div>
+            
+            <div class="photo-container">
+              <img src="Sequite_Pic.jpg" alt="Wesley C. Sequite" class="profile-img">
+            </div>
+
+            <div class="badge-details">
+              <h3 class="badge-name">WESLEY C. SEQUITE</h3>
+              <p class="badge-role">MECHATRONICS TECHNOLOGIST</p>
+              <div class="barcode">
+                <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-
-    <div class="project-card">
-      <div class="card-badge">Prototype</div>
-      <h3>Process Control Interface</h3>
-      <p>An interactive hardware simulation control panel featuring fluid grid properties, custom transitions, and micro-interactions.</p>
-      <div class="tech-stack">
-        <span class="tech-tag">CSS Grid</span>
-        <span class="tech-tag">JavaScript</span>
-      </div>
-    </div>
-
-  </main>
+    </section>
+  </div>
 
   <script src="app.js"></script>
 </body>
