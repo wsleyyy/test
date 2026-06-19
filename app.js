@@ -1,144 +1,127 @@
-/* DESIGN SYSTEM & VARIABLES */
-:root {
-  --bg-dark: #09090e;
-  --bg-surface: rgba(255, 255, 255, 0.03);
-  --accent-glow: #6366f1; /* Vibrant Indigo */
-  --text-primary: #f3f4f6;
-  --text-secondary: #9ca3af;
-  --border-color: rgba(255, 255, 255, 0.08);
-  --transition-smooth: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
+document.addEventListener("DOMContentLoaded", () => {
+  const badge = document.getElementById("id-badge");
+  const lacePath = document.getElementById("lace-path");
+  const lacePathInner = document.getElementById("lace-path-inner");
 
-/* GLOBAL RESETS */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+  // Hook point where lace connects to ceiling anchor
+  const anchorX = window.innerWidth / 4 * 3; // Right side center
+  const anchorY = 0;
 
-body {
-  background-color: var(--bg-dark);
-  color: var(--text-primary);
-  font-family: 'Inter', sans-serif;
-  overflow-x: hidden;
-  padding: 6rem 2rem;
-}
-
-/* HERO SECTION */
-.hero {
-  text-align: center;
-  max-width: 800px;
-  margin: 0 auto 6rem auto;
-}
-
-.hero-title {
-  font-size: 3.5rem;
-  font-weight: 800;
-  letter-spacing: -0.05em;
-  margin-bottom: 1.5rem;
-  background: linear-gradient(to right, #ffffff, var(--text-secondary));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.hero-subtitle {
-  color: var(--text-secondary);
-  font-size: 1.25rem;
-  margin-bottom: 2.5rem;
-  line-height: 1.6;
-}
-
-/* INTERACTIVE MAGNET BUTTON */
-.btn-interactive {
-  background: transparent;
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
-  padding: 0.9rem 2.2rem;
-  font-size: 1rem;
-  font-weight: 600;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: var(--transition-smooth);
-}
-
-.btn-interactive:hover {
-  border-color: var(--accent-glow);
-  box-shadow: 0 0 25px rgba(99, 102, 241, 0.45);
-  transform: scale(1.03);
-  background-color: rgba(99, 102, 241, 0.05);
-}
-
-/* RESPONSIVE LAYOUT GRID */
-.portfolio-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 2.5rem;
-  max-width: 1100px;
-  margin: 0 auto;
-}
-
-/* GLASSMORPHISM CARD */
-.project-card {
-  background: var(--bg-surface);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 2.5rem;
-  position: relative;
-  transition: var(--transition-smooth);
+  // Badge state variables
+  let x = anchorX;
+  let y = 220; 
+  let vx = 0;
+  let vy = 0;
   
-  /* Initial hidden states for the JS reveal scroll engine */
-  opacity: 0;
-  transform: translateY(40px);
-}
+  let targetX = x;
+  let targetY = y;
+  
+  let isDragging = false;
+  let pointerX = 0;
+  let pointerY = 0;
+  let grabOffsetX = 0;
+  let grabOffsetY = 0;
 
-.project-card:hover {
-  transform: translateY(-8px) scale(1.01);
-  border-color: rgba(99, 102, 241, 0.4);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(99, 102, 241, 0.15);
-}
+  // Spring & Swing settings
+  const springK = 0.08; 
+  const damping = 0.92; 
+  const gravity = 0.4;
+  let swingTimer = 0;
 
-.card-badge {
-  display: inline-block;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--accent-glow);
-  margin-bottom: 1.25rem;
-  font-weight: 600;
-}
+  // 1. DRAG EVENT LISTENERS
+  badge.addEventListener("mousedown", (e) => {
+    isDragging = true;
+    grabOffsetX = e.clientX - x;
+    grabOffsetY = e.clientY - y;
+  });
 
-.project-card h3 {
-  font-size: 1.5rem;
-  margin-bottom: 0.85rem;
-  letter-spacing: -0.02em;
-}
+  window.addEventListener("mousemove", (e) => {
+    if (!isDragging) return;
+    pointerX = e.clientX;
+    pointerY = e.clientY;
+    
+    targetX = pointerX - grabOffsetX;
+    targetY = pointerY - grabOffsetY;
 
-.project-card p {
-  color: var(--text-secondary);
-  font-size: 1rem;
-  margin-bottom: 2rem;
-  line-height: 1.6;
-}
+    // Limit maximum stretch range to avoid broken physics layouts
+    const dx = targetX - anchorX;
+    const dy = targetY - anchorY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist > 500) {
+      targetX = anchorX + (dx / dist) * 500;
+      targetY = anchorY + (dy / dist) * 500;
+    }
+  });
 
-.tech-stack {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
+  window.addEventListener("mouseup", () => {
+    isDragging = false;
+  });
 
-.tech-tag {
-  font-size: 0.8rem;
-  background: rgba(255, 255, 255, 0.05);
-  padding: 0.3rem 0.8rem;
-  border-radius: 6px;
-  color: var(--text-secondary);
-  border: 1px solid rgba(255, 255, 255, 0.03);
-}
+  // Support Mobile/Touch Devices
+  badge.addEventListener("touchstart", (e) => {
+    isDragging = true;
+    const touch = e.touches[0];
+    grabOffsetX = touch.clientX - x;
+    grabOffsetY = touch.clientY - y;
+  });
 
-/* CLASS TOGGLED BY INTERSECTION OBSERVER */
-.project-card.reveal {
-  opacity: 1;
-  transform: translateY(0);
-}
+  window.addEventListener("touchmove", (e) => {
+    if (!isDragging) return;
+    const touch = e.touches[0];
+    targetX = touch.clientX - grabOffsetX;
+    targetY = touch.clientY - grabOffsetY;
+  });
+
+  window.addEventListener("touchend", () => { isDragging = false; });
+
+  // 2. PHYSICS ANIMATION LOOP
+  function updatePhysics() {
+    swingTimer += 0.03;
+
+    if (isDragging) {
+      // Track pointer directly
+      x += (targetX - x) * 0.3;
+      y += (targetY - y) * 0.3;
+      vx = 0;
+      vy = 0;
+    } else {
+      // Resting position adds a small ambient loop swing animation
+      const restX = anchorX + Math.sin(swingTimer) * 20; 
+      const restY = 220 + Math.cos(swingTimer * 2) * 4;
+
+      // Spring acceleration formulas
+      let ax = (restX - x) * springK;
+      let ay = (restY - y) * springK + gravity;
+
+      vx = (vx + ax) * damping;
+      vy = (vy + ay) * damping;
+
+      x += vx;
+      y += vy;
+    }
+
+    // Apply 2D hardware-accelerated transforms onto the ID Badge
+    // Subtle rotation added based on horizontal velocity vector
+    const rotation = isDragging ? (targetX - x) * 0.1 : vx * 1.2;
+    badge.style.transform = `translate3d(${x - (window.innerWidth / 4 * 3)}px, ${y - 220}px, 0) rotate(${rotation}deg)`;
+
+    // 3. DRAW STRINGS (LANYARD LACE)
+    // Creates a realistic curved rope profile using bezier anchor coordinates
+    const badgeTopX = x;
+    const badgeTopY = y;
+    
+    // Control point splits the lace path into natural dangling loops
+    const controlX = (anchorX + badgeTopX) / 2 + (vx * 2);
+    const controlY = (anchorY + badgeTopY) / 2 + 60;
+
+    const pathData = `M ${anchorX - 30},${anchorY} Q ${controlX},${controlY} ${badgeTopX},${badgeTopY} M ${anchorX + 30},${anchorY} Q ${controlX},${controlY} ${badgeTopX},${badgeTopY}`;
+    
+    lacePath.setAttribute("d", pathData);
+    lacePathInner.setAttribute("d", pathData);
+
+    requestAnimationFrame(updatePhysics);
+  }
+
+  // Initialize loop
+  updatePhysics();
+});
