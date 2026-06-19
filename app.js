@@ -1,26 +1,22 @@
 document.addEventListener("DOMContentLoaded", () => {
   const badge = document.getElementById("id-badge");
+  const lacePath = document.getElementById("lace-path");
+  const lacePathInner = document.getElementById("lace-path-inner");
   const interactiveSide = document.querySelector(".interactive-side");
 
-  let anchorX = window.innerWidth * 0.75;
+  // Canvas coordinate space configuration
+  const svgW = 500;
+  const anchorX = 250; // Dead center of the loop top hanging point
+  const anchorY = -10; // Slightly hidden above the viewport boundary
   const restHeight = 335;
 
-  function updateAnchor() {
-    if (interactiveSide) {
-      const rect = interactiveSide.getBoundingClientRect();
-      anchorX = rect.left + (rect.width / 2);
-    }
-  }
-  updateAnchor();
-  window.addEventListener("resize", updateAnchor);
-
-  let x = 0;
-  let y = 0;
+  let x = anchorX;
+  let y = restHeight;
   let vx = 0;
   let vy = 0;
   
-  let targetX = 0;
-  let targetY = 0;
+  let targetX = x;
+  let targetY = y;
   
   let isDragging = false;
   let grabOffsetX = 0;
@@ -28,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const springK = 0.06;  
   const damping = 0.85;  
-  const gravity = 0.4;   
+  const gravity = 0.5;   
   let swingTimer = 0;
 
   function startDrag(clientX, clientY) {
@@ -40,20 +36,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function moveDrag(clientX, clientY) {
     if (!isDragging) return;
-    updateAnchor();
     const sideRect = interactiveSide.getBoundingClientRect();
     
-    const localTargetX = clientX - (sideRect.left + sideRect.width / 2);
-    const localTargetY = clientY - restHeight;
+    const rawTargetX = ((clientX - sideRect.left) / sideRect.width) * svgW;
+    const rawTargetY = clientY - sideRect.top;
 
-    targetX = localTargetX - grabOffsetX;
-    targetY = localTargetY - grabOffsetY;
+    targetX = rawTargetX - grabOffsetX;
+    targetY = rawTargetY;
 
-    // Safety extension constraints limit
-    const dist = Math.sqrt(targetX * targetX + targetY * targetY);
-    if (dist > 400) {
-      targetX = (targetX / dist) * 400;
-      targetY = (targetY / dist) * 400;
+    const dx = targetX - anchorX;
+    const dy = targetY - anchorY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist > 500) {
+      targetX = anchorX + (dx / dist) * 500;
+      targetY = anchorY + (dy / dist) * 500;
     }
   }
 
@@ -61,7 +57,6 @@ document.addEventListener("DOMContentLoaded", () => {
     isDragging = false;
   }
 
-  // Inputs Handlers
   badge.addEventListener("mousedown", (e) => {
     e.preventDefault();
     startDrag(e.clientX, e.clientY);
@@ -85,7 +80,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.addEventListener("touchend", endDrag);
 
-  // Core Physics Loop
   function updatePhysics() {
     swingTimer += 0.025;
 
@@ -95,8 +89,8 @@ document.addEventListener("DOMContentLoaded", () => {
       vx = 0;
       vy = 0;
     } else {
-      const restX = Math.sin(swingTimer) * 15;
-      const restY = Math.cos(swingTimer * 2) * 3;
+      const restX = anchorX + Math.sin(swingTimer) * 15;
+      const restY = restHeight + Math.cos(swingTimer * 2) * 3;
 
       let ax = (restX - x) * springK;
       let ay = (restY - y) * springK + gravity;
@@ -108,15 +102,55 @@ document.addEventListener("DOMContentLoaded", () => {
       y += vy;
     }
 
-    const rotation = isDragging ? (targetX - x) * 0.08 : vx * 1.5;
-    badge.style.transform = `translate3d(${x}px, ${y}px, 0) rotate(${rotation}deg)`;
+    if (interactiveSide) {
+      const sideRect = interactiveSide.getBoundingClientRect();
+      const currentPixelX = (x / svgW) * sideRect.width;
+      const initialPixelX = (anchorX / svgW) * sideRect.width;
+      
+      const translateX = currentPixelX - initialPixelX;
+      const translateY = y - restHeight;
+
+      const rotation = isDragging ? (targetX - x) * 0.08 : vx * 1.5;
+      badge.style.transform = `translate3d(${translateX}px, ${translateY}px, 0) rotate(${rotation}deg)`;
+
+      // --- THE LACE VISUAL CORRECTION ---
+      // Lowered the connection target coordinate down into the metal clip area
+      const badgeTopX = x;
+      const badgeTopY = y + 16; 
+
+      // Widened the neck-loop span at the top ceiling for a realistic drape profile
+      const leftAnchorX = anchorX - 55;
+      const rightAnchorX = anchorX + 55;
+
+      // Dynamic path Bezier control handles that react to velocity inertia
+      const leftControlX = leftAnchorX + (vx * 0.3);
+      const leftControlY = badgeTopY * 0.45;
+      const rightControlX = rightAnchorX + (vx * 0.3);
+      const rightControlY = badgeTopY * 0.45;
+
+      // Merges both left and right bands seamlessly into a sharp point at the clip
+      const pathData = `
+        M ${leftAnchorX},${anchorY} 
+        C ${leftControlX},${leftControlY} ${badgeTopX - 8},${badgeTopY - 20} ${badgeTopX},${badgeTopY}
+        M ${rightAnchorX},${anchorY} 
+        C ${rightControlX},${rightControlY} ${badgeTopX + 8},${badgeTopY - 20} ${badgeTopX},${badgeTopY}
+      `;
+
+      lacePath.setAttribute("d", pathData);
+      lacePathInner.setAttribute("d", pathData);
+
+      // Boost line-weights directly to make the fabric look prominent and distinct
+      lacePath.setAttribute("stroke-width", "14");      /* Dark outer edge border */
+      lacePathInner.setAttribute("stroke-width", "6");  /* Bright inner neon tracer line */
+    }
 
     requestAnimationFrame(updatePhysics);
   }
 
-  updatePhysics();
+  setTimeout(() => {
+    updatePhysics();
+  }, 50);
 
-  // Scroll Routine
   const exploreBtn = document.getElementById('explore-btn');
   const projectsSection = document.getElementById('projects');
   if (exploreBtn && projectsSection) {
@@ -125,7 +159,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Cards Observer 
   const cards = document.querySelectorAll('.project-card');
   const revealOnScroll = new IntersectionObserver((entries, observer) => {
     entries.forEach(entry => {
